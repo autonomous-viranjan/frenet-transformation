@@ -157,5 +157,7 @@ if __name__ == '__main__':
     plt.plot(coordinate_transform.opt.x, coordinate_transform.cspline(coordinate_transform.opt.x), 'go', label="projection point")
     plt.xlim([0, 160])
     plt.ylim([-150, 10])
+    plt.xlabel("x [m]")
+    plt.ylabel("y [m]")
     plt.legend()
     plt.show()
