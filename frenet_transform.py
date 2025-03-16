@@ -136,11 +136,11 @@ if __name__ == '__main__':
     
     print("Cartesian to Frenet:")
     # Example current vehicle sensor info
-    x = 90.4969499222862
-    y = -22.0103088757058
+    x = 90.4969499222862 + 5.0
+    y = -22.0103088757058 + 3.0
     vx = 5.0
     vy = -2.0
-    a = 0.5
+    a = 0.5 # net acceleration
 
     s, v_s, a_s, l, v_l, a_l = coordinate_transform.xy2sl(x, y, vx, vy, a)
 
