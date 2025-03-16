@@ -138,14 +138,30 @@ if __name__ == '__main__':
 
     s, v, a, l, ldot = coordinate_transform.xy2sl(x, y, vx, vy, a)
 
+    print(f"x: {x}, y: {y}, vx: {vx}, vy: {vy}, a: {a}")
     print(f"s: {s}, v: {v}, a: {a}, l: {l}, ldot: {ldot}")
+
+    plt.figure(1)
+    plt.plot(coordinate_transform.x_road, coordinate_transform.cspline(coordinate_transform.x_road), label="Spline")
+    plt.plot(x, y, 'ro', label="vehicle point")
+    plt.plot(coordinate_transform.opt.x, coordinate_transform.cspline(coordinate_transform.opt.x), 'go', label="projection point")
+    plt.xlim([0, 160])
+    plt.ylim([-150, 10])
+    plt.xlabel("x [m]")
+    plt.ylabel("y [m]")
+    plt.legend()
+    plt.show()
+
+    print("\nInverse\n")
 
     print("Frenet to Cartesian:")
 
     x, y, vx, vy = coordinate_transform.sl2xy(s, v, l, ldot)
 
+    print(f"s: {s}, v: {v}, a: {a}, l: {l}, ldot: {ldot}")
     print(f"x: {x}, y: {y}, vx: {vx}, vy: {vy}")
 
+    plt.figure(2)
     plt.plot(coordinate_transform.x_road, coordinate_transform.cspline(coordinate_transform.x_road), label="Spline")
     plt.plot(x, y, 'ro', label="vehicle point")
     plt.plot(coordinate_transform.opt.x, coordinate_transform.cspline(coordinate_transform.opt.x), 'go', label="projection point")
