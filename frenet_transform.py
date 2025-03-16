@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Viranjan Bhattacharyya (vbhatta@clemson.edu)
+# Viranjan Bhattacharyya (vbhatta@clemson.edu),
 
 import numpy as np
 import scipy as sp
@@ -13,9 +13,10 @@ class RoadFrame:
         self.y_road = self.waypoints[:, 1]
         self.s = 0.0
         self.s_dot = 0.0
-        self.a = 0.0
+        self.s_ddot = 0.0
         self.l = 0.0
         self.l_dot = 0.0
+        self.l_ddot = 0.0
         self.cspline = sp.interpolate.CubicSpline(self.x_road, self.y_road)        
 
     # xy to sl
@@ -55,11 +56,6 @@ class RoadFrame:
         self.s_dir = np.array([np.cos(theta_s), np.sin(theta_s)])
             
         self.s_dot = np.dot(v, self.s_dir)
-
-    def compute_a(self, a, vx, vy):
-        v_hat = np.array([vx, vy]) / np.linalg.norm(np.array([vx, vy]))
-        a_net = a * v_hat
-        self.a = np.dot(a_net, self.s_dir)
     
     def compute_l(self, x, y):
         vehicle_point = np.array([x, y])
@@ -77,14 +73,20 @@ class RoadFrame:
         v = np.array([vx, vy])
         self.l_dot = np.dot(v, self.l_dir)
 
+    def compute_a(self, a, vx, vy):
+        v_hat = np.array([vx, vy]) / np.linalg.norm(np.array([vx, vy]))
+        a_net = a * v_hat
+        self.s_ddot = np.dot(a_net, self.s_dir)
+        self.l_ddot = np.dot(a_net, self.l_dir)
+
     def xy2sl(self, x, y, vx, vy, a):
         self.compute_s(x, y)
         self.compute_s_dot(vx, vy)
-        self.compute_a(a, vx, vy)
         self.compute_l(x, y)
         self.compute_l_dot(vx, vy)
+        self.compute_a(a, vx, vy)
 
-        return self.s, self.s_dot, self.a, self.l, self.l_dot
+        return self.s, self.s_dot, self.s_ddot, self.l, self.l_dot, self.l_ddot
 
     # sl to xy
     def _s_dis(self, x_cs, s):
@@ -101,7 +103,7 @@ class RoadFrame:
         except:
             raise Exception("Out of bounds")
         
-    def sl2xy(self, s, v, l, ldot):
+    def sl2xy(self, s, sdot, sddot, l, ldot, lddot):
         opt = sp.optimize.minimize_scalar(lambda x_cs:self._s_dis(x_cs, s), bounds=(self.x_road[0], self.x_road[-1]))
         x_cs = opt.x
         y_cs = self.cspline(opt.x)
@@ -117,11 +119,15 @@ class RoadFrame:
         x_ = x_cs + LANEWIDTH * l * np.dot(l_hat, np.array([1, 0, 0]))
         y_ = y_cs + LANEWIDTH * l * np.dot(l_hat, np.array([0, 1, 0]))
 
-        v_net = v * s_hat + ldot * l_hat
+        v_net = sdot * s_hat + ldot * l_hat
         vx_ = np.dot(v_net, np.array([1, 0, 0]))
         vy_ = np.dot(v_net, np.array([0, 1, 0]))
 
-        return x_, y_, vx_, vy_
+        a_net = sddot * s_hat + lddot * l_hat
+        ax_ = np.dot(a_net, np.array([1, 0, 0]))
+        ay_ = np.dot(a_net, np.array([0, 1, 0]))
+
+        return x_, y_, vx_, vy_, ax_, ay_
 
 if __name__ == '__main__':
     # Test coordinate transformation
@@ -136,10 +142,10 @@ if __name__ == '__main__':
     vy = -2.0
     a = 0.5
 
-    s, v, a, l, ldot = coordinate_transform.xy2sl(x, y, vx, vy, a)
+    s, v_s, a_s, l, v_l, a_l = coordinate_transform.xy2sl(x, y, vx, vy, a)
 
     print(f"x: {x}, y: {y}, vx: {vx}, vy: {vy}, a: {a}")
-    print(f"s: {s}, v: {v}, a: {a}, l: {l}, ldot: {ldot}")
+    print(f"s: {s}, s_dot: {v_s}, s_ddot: {a_s}, l: {l}, l_dot: {v_l}, l_ddot: {a_l}")
 
     plt.figure(1)
     plt.plot(coordinate_transform.x_road, coordinate_transform.cspline(coordinate_transform.x_road), label="Spline")
@@ -156,10 +162,10 @@ if __name__ == '__main__':
 
     print("Frenet to Cartesian:")
 
-    x, y, vx, vy = coordinate_transform.sl2xy(s, v, l, ldot)
+    x, y, vx, vy, ax, ay = coordinate_transform.sl2xy(s, v_s, a_s, l, v_l, a_l)
 
-    print(f"s: {s}, v: {v}, a: {a}, l: {l}, ldot: {ldot}")
-    print(f"x: {x}, y: {y}, vx: {vx}, vy: {vy}")
+    print(f"s: {s}, s_dot: {v_s}, s_ddot: {a_s}, l: {l}, l_dot: {v_l}, l_ddot: {a_l}")
+    print(f"x: {x}, y: {y}, vx: {vx}, vy: {vy}, a: {np.sqrt(ax**2 + ay**2)}")
 
     plt.figure(2)
     plt.plot(coordinate_transform.x_road, coordinate_transform.cspline(coordinate_transform.x_road), label="Spline")
