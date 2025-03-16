@@ -113,11 +113,11 @@ class RoadFrame:
 
         s_hat = np.array([si, sj, 0])
         k_hat = np.array([0, 0, 1])
-        l_hat = np.cross(k_hat, s_hat)
+        l_hat = (l / abs(l)) * np.cross(k_hat, s_hat)
 
         LANEWIDTH = 3.7
-        x_ = x_cs + LANEWIDTH * l * np.dot(l_hat, np.array([1, 0, 0]))
-        y_ = y_cs + LANEWIDTH * l * np.dot(l_hat, np.array([0, 1, 0]))
+        x_ = x_cs + (abs(l) * LANEWIDTH) * np.dot(l_hat, np.array([1, 0, 0]))
+        y_ = y_cs + (abs(l) * LANEWIDTH) * np.dot(l_hat, np.array([0, 1, 0]))
 
         v_net = sdot * s_hat + ldot * l_hat
         vx_ = np.dot(v_net, np.array([1, 0, 0]))
