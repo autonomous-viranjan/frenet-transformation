@@ -141,12 +141,6 @@ if __name__ == '__main__':
     print(f"s: {s}, v: {v}, a: {a}, l: {l}, ldot: {ldot}")
 
     print("Frenet to Cartesian:")
-    # Example s-l coordinates
-    s = 75.69221462798248
-    v = 4.9494168855983816
-    a = 0.45954182117520115
-    l = 0.9905090025158598
-    ldot = 2.1220916207705574
 
     x, y, vx, vy = coordinate_transform.sl2xy(s, v, l, ldot)
 
