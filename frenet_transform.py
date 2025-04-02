@@ -17,7 +17,8 @@ class RoadFrame:
         self.l = 0.0
         self.l_dot = 0.0
         self.l_ddot = 0.0
-        self.cspline = sp.interpolate.CubicSpline(self.x_road, self.y_road)        
+        self.cspline = sp.interpolate.CubicSpline(self.x_road, self.y_road)  
+        self.cspline_derivative = self.cspline.derivative()      
 
     # xy to sl
     def f_dis(self, point, x_sp):
@@ -88,23 +89,19 @@ class RoadFrame:
 
         return self.s, self.s_dot, self.s_ddot, self.l, self.l_dot, self.l_ddot
 
-    # sl to xy
-    def _s_dis(self, x_cs, s):
-        """ function to compute distance between s on spline and parametrized point cspline(x_cs) """
-        sdis = 0.0
-        i = 0
-        try:
-            while self.x_road[i+1] <= x_cs:
-                straight = np.linalg.norm(np.array([self.x_road[0], self.cspline(self.x_road[0])]) - np.array([self.x_road[i], self.cspline(self.x_road[i])]))
-                sdis += np.linalg.norm(np.array([self.x_road[i], self.cspline(self.x_road[i])]) - np.array([self.x_road[i+1], self.cspline(self.x_road[i+1])]))
-                i += 1
-            sdis += np.linalg.norm(np.array([self.x_road[i], self.cspline(self.x_road[i])]) - np.array([x_cs, self.cspline(x_cs)]))
-            return np.abs(sdis - s)
-        except:
-            raise Exception("Out of bounds")
+    # sl to xy        
+    def _arc_len(self, x_cs):
+        f = lambda x: np.sqrt(1 + (self.cspline_derivative(x)) ** 2)
+        s_len = sp.integrate.quad(f, self.x_road[0], x_cs)
+        
+        return s_len[0]
+    
+    def _s_eval(self, s, x_cs):
+        assert x_cs <= self.x_road[-1]
+        return np.linalg.norm(s - self._arc_len(x_cs))
         
     def sl2xy(self, s, sdot, sddot, l, ldot, lddot):
-        opt = sp.optimize.minimize_scalar(lambda x_cs:self._s_dis(x_cs, s), bounds=(self.x_road[0], self.x_road[-1]))
+        opt = sp.optimize.minimize_scalar(lambda x_cs:self._s_eval(s, x_cs), bounds=(self.x_road[0], self.x_road[-1]))
         x_cs = opt.x
         y_cs = self.cspline(opt.x)
         slope = self.cspline.derivative()
