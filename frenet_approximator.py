@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # Viranjan Bhattacharyya (vbhatta@clemson.edu), 
-# EMC2 Lab Clemson University
+# Efficient Mobility Lab Clemson University
 
 import numpy as np
 import scipy as sp
